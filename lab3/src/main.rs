@@ -1,7 +1,7 @@
 use std::{io, vec};
 fn main() {
     let mut matrix = Vec::<Vec<f64>>::new();
-    let mut second = Vec::<f64>::new();
+    let mut free_elements = Vec::<f64>::new();
     let mut size = usize::MIN;
     println!("Ручной ввод?\n(1)Да;\n(2)Нет");
     let mut choice = String::new();
@@ -32,7 +32,7 @@ fn main() {
             for _i in 0..size
             {
                 matrix.push(vec![0.0; size]);
-                second.push(0.0);
+                free_elements.push(0.0);
             }
         println!("Введите коэфы и свободные члены: ");
         for i in 0..size {
@@ -56,7 +56,7 @@ fn main() {
             let trimmed = input_text.trim();
             match trimmed.parse::<f64>() {
         Ok(v) => {
-            second[i] = v;
+            free_elements[i] = v;
         }
             Err(..) => println!("Не подходящий формат: {}", trimmed),
         };
@@ -64,7 +64,7 @@ fn main() {
     }
     else {
         matrix = vec![vec![1.03,0.993],vec![0.991,0.051]];
-        second = vec![2.53,2.43];
+        free_elements = vec![2.53,2.43];
         size = 2;
     }
     println!("--------------------------------------------------------------------------------");
@@ -76,77 +76,109 @@ fn main() {
             {
                 if matrix[i][j] < 0.0
                 {
-                    print!("{}*x{}", matrix[i][j],i);
+                    print!(" - {}x{}", matrix[i][j].abs(),i);
                 }
                 else {
-                    print!("+{}*x{}", matrix[i][j],i);
+                    print!(" + {}x{}", matrix[i][j],i);
                 }
             }
             else {
-                print!("{}*x{}", matrix[i][j],i);
+                print!(" {}x{}", matrix[i][j],i);
             }
         }
-        print!("={}\n", second[i]);
+        print!(" = {}\n", free_elements[i]);
     }
 
-    let answer_for_givens = givens(matrix.clone(), second.clone(), size.clone());
-    let answer_for_regular = regular(matrix.clone(), second.clone(), size.clone());
+    let answer_for_givens = givens(matrix.clone(), free_elements.clone(), size.clone());
+    let answer_for_regular = regular(matrix.clone(), free_elements.clone(), size.clone());
     println!("--------------------------------------------------------------------------------");
     println!("Корни системы по Гивенсу:");
     for i in 0..size {
         print!("x{} = {} ", i, answer_for_givens[i]);
     }
+    println!("Проверка");
+        for i in 0..size {
+            let mut ans =0.0;
+            for j in 0..size
+            {
+                ans += matrix[i][j]*answer_for_givens[j];
+            }
+            println!("x[{}] = {}", i, ans-free_elements[i]);
+        }
     println!("\n---------------------------------------------------------------------------------");
     println!("Корни системы по Регулярному:");
     for i in 0..size {
         print!("x{} = {} ", i, answer_for_regular[i]);
     }
+    println!("Проверка");
+        for i in 0..size {
+            let mut ans =0.0;
+            for j in 0..size
+            {
+                ans += matrix[i][j]*answer_for_regular[j];
+            }
+            println!("x[{}] = {}", i, ans-free_elements[i]);
+        }
 }
-fn givens(matrix: Vec<Vec<f64>>, second: Vec<f64>, size: usize) -> Vec<f64>
+fn givens(matrix: Vec<Vec<f64>>, free_elements: Vec<f64>, size: usize) -> Vec<f64>
 {
     let mut answer = vec![0.0;size];
-    let mut A = matrix.clone();
-    let mut B = second.clone();
-    let mut M = 0.0;
-    let mut L;
-    let mut R;
+    let mut indent_matrix = matrix.clone();
+    let mut indent_free_elements = free_elements.clone();
+    let mut l;
+    let mut r;
     for i in 0..(size-1)
     {
         for j in (i+1)..size
         {
-            M = (matrix[i][i]*matrix[i][i]*matrix[j][i]*matrix[j][i]).sqrt();
-            L = matrix[j][i] / M;// A12
-            M = matrix[i][i]/ M;//B12
+            let mut m = (matrix[i][i]*matrix[i][i]*matrix[j][i]*matrix[j][i]).sqrt();
+            l = matrix[j][i] / m;// A12
+            m = matrix[i][i]/ m;//B12
             for k in 0..size
             {
-                R = matrix[i][k];
-                A[i][k] = M * A[i][k] + L * A[j][k]; // a1j
-                A[j][k] = M * A[j][k] - L * R;
+                r = matrix[i][k];
+                indent_matrix[i][k] = m * indent_matrix[i][k] + l * indent_matrix[j][k]; // a1j
+                indent_matrix[j][k] = m * indent_matrix[j][k] - l * r;
             }
-            R = B[i];
-            B[i] = M * B[i] + L * B[j];
-            B[j] = M * B[j] - L * R;
+            r = indent_free_elements[i];
+            indent_free_elements[i] = m * indent_free_elements[i] + l * indent_free_elements[j];
+            indent_free_elements[j] = m * indent_free_elements[j] - l * r;
         }
     }
-    println!("Матрица после вращения: {:?}", A);
-    println!("B:{:?}", B);
-    answer[size-1] = B[size-1] / A[size-1][size-1];
+    println!("Данные после вращения: \n");
+    for i in 0..size {
+        for j in 0..size {
+            if j != 0
+            {
+                if indent_matrix[i][j] < 0.0
+                {
+                    print!(" - {}", indent_matrix[i][j].abs());
+                }
+                else {
+                    print!(" + {}", indent_matrix[i][j]);
+                }
+            }
+            else {
+                print!("{}", indent_matrix[i][j]);
+            }
+        }
+        print!(" = {}\n", indent_free_elements[i]);
+    }
+    answer[size-1] = indent_free_elements[size-1] / indent_matrix[size-1][size-1];
     for i in (0..=size-2).rev()
     {
-        B[i] = second[i];
-        A[i][i] = matrix[i][i];
-        answer[i] = (B[i]-matrix[i][i+1] * answer[i+1])/ A[i][i];
+        indent_free_elements[i] = free_elements[i];
+        indent_matrix[i][i] = matrix[i][i];
+        answer[i] = (indent_free_elements[i]-matrix[i][i+1] * answer[i+1])/ indent_matrix[i][i];
     }
     answer
 }
-fn regular(matrix: Vec<Vec<f64>>, second: Vec<f64>, size: usize) -> Vec<f64>
+fn regular(matrix: Vec<Vec<f64>>, free_elements: Vec<f64>, size: usize) -> Vec<f64>
 {
     let mut answer = vec![0.0; size];
-    const eps: f64 = 0.005;
+    const CUSTOM_EPS: f64 = 0.005;
     let mut a1 = vec![vec![0.0; size];size];
-    let mut a2 = vec![vec![0.0; size];size];
     let mut b1 = vec![0.0;size];
-    let mut b2 = vec![0.0;size];
     let mut x0 = vec![0.0;size];
     let mut s = 0.0;
     for i in  0..size
@@ -166,16 +198,16 @@ fn regular(matrix: Vec<Vec<f64>>, second: Vec<f64>, size: usize) -> Vec<f64>
         s = 0.0;
         for j in 0..size
         {
-            s += matrix[j][i] * second[j]
+            s += matrix[j][i] * free_elements[j]
         }
         b1[i] = s;
     }
     let mut alfa = 0.0;
-    b2 = vec![eps;size];
-    let mut max = 0.0;
-    loop {
+    let mut b2 = vec![CUSTOM_EPS;size];
+    let mut max = f64::MAX;
+    while max>=CUSTOM_EPS {
         alfa += 0.00000001;
-        a2 = a1.clone();
+        let mut a2 = a1.clone();
         for i in 0..size
         {
             a2[i][i] = a1[i][i] + alfa;
@@ -197,45 +229,42 @@ fn regular(matrix: Vec<Vec<f64>>, second: Vec<f64>, size: usize) -> Vec<f64>
                 max = (b2[i] - answer[i]).abs();
             }
         }
-        if max <= eps
-        {
-            break;
-        }
+
     }
     answer
 }
-fn gaus(mut A: Vec<Vec<f64>>, mut B: Vec<f64>) -> Vec<f64> {
-    let N = (&B).len();
-    let mut X = vec![1.0;N];
+fn gaus(mut indent_matrix: Vec<Vec<f64>>, mut indent_free_elements: Vec<f64>) -> Vec<f64> {
+    let size = (&indent_free_elements).len();
+    let mut answer = vec![1.0;size];
     //Вычитание из строк не другие строки умноженные на число
-    for i in 0..N-1 {
-        sort_rows(i, &mut A, &mut B, N);
-        for j in (i + 1)..N {
-            if A[i][i] != 0.0 {
-                let mult_element = A[j][i] / A[i][i];
-                for k in i..N {
-                    A[j][k] = A[j][k] - (A[i][k] * mult_element);
+    for i in 0..size-1 {
+        sort_rows(i, &mut indent_matrix, &mut indent_free_elements, size);
+        for j in (i + 1)..size {
+            if indent_matrix[i][i] != 0.0 {
+                let mult_element = indent_matrix[j][i] / indent_matrix[i][i];
+                for k in i..size {
+                    indent_matrix[j][k] = indent_matrix[j][k] - (indent_matrix[i][k] * mult_element);
                 }
-                B[j] = B[j] - (B[i] * mult_element);
+                indent_free_elements[j] = indent_free_elements[j] - (indent_free_elements[i] * mult_element);
             }
         }
     }
-    for i in (0..=N-1).rev()
+    for i in (0..=size-1).rev()
     {
-        X[i] = B[i];
-        for j in ((i+1)..N).rev()
+        answer[i] = indent_free_elements[i];
+        for j in ((i+1)..size).rev()
         {
-            X[i]=X[i]-(A[i][j]*X[j]);
+            answer[i]=answer[i]-(indent_matrix[i][j]*answer[j]);
         }
-        X[i]=X[i]/A[i][i];
+        answer[i]=answer[i]/indent_matrix[i][i];
     }
-    X
+    answer
 }
 //Сортировка строки матрицы по возрастанию
-fn sort_rows(sort_index: usize, matrix: &mut Vec<Vec<f64>>, right_part: &mut Vec<f64>, N:usize) {
+fn sort_rows(sort_index: usize, matrix: &mut Vec<Vec<f64>>, right_part: &mut Vec<f64>, size:usize) {
     let mut max_element: f64 = matrix[sort_index][sort_index];
     let mut max_element_index = sort_index;
-    for i in (sort_index + 1)..N {
+    for i in (sort_index + 1)..size {
         if matrix[i][sort_index] > max_element {
             max_element = matrix[i][sort_index];
             max_element_index = i;
@@ -246,7 +275,7 @@ fn sort_rows(sort_index: usize, matrix: &mut Vec<Vec<f64>>, right_part: &mut Vec
         temp = right_part[max_element_index];
         right_part[max_element_index] = right_part[sort_index];
         right_part[sort_index] = temp;
-        for i in 0..N {
+        for i in 0..size {
             temp = matrix[max_element_index][i];
             matrix[max_element_index][i] = matrix[sort_index][i];
             matrix[sort_index][i] = temp;
