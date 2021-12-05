@@ -3,12 +3,11 @@
 version = 3
 
 [[package]]
-name = "help"
-version = "0.1.0"
-
-[[package]]
 name = "lab1"
 version = "0.1.0"
+dependencies = [
+ "methods",
+]
 
 [[package]]
 name = "lab10"
@@ -29,14 +28,23 @@ version = "0.1.0"
 [[package]]
 name = "lab2"
 version = "0.1.0"
+dependencies = [
+ "methods",
+]
 
 [[package]]
 name = "lab3"
 version = "0.1.0"
+dependencies = [
+ "methods",
+]
 
 [[package]]
 name = "lab4"
 version = "0.1.0"
+dependencies = [
+ "methods",
+]
 
 [[package]]
 name = "lab5"
@@ -56,4 +64,8 @@ version = "0.1.0"
 
 [[package]]
 name = "lab9"
+version = "0.1.0"
+
+[[package]]
+name = "methods"
 version = "0.1.0"
