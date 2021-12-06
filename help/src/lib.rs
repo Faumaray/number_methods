@@ -271,14 +271,12 @@ pub fn givens(matrix: Vec<Vec<f64>>, free_elements: Vec<f64>, size: usize) -> Ve
 }
 pub fn regular(matrix: Vec<Vec<f64>>, free_elements: Vec<f64>, size: usize) -> Vec<f64> {
     let mut answer = vec![0.0; size];
-    const CUSTOM_EPS: f64 = 0.005;
     let mut a1 = vec![vec![0.0; size]; size];
     let mut b1 = vec![0.0; size];
     let mut x0 = vec![0.0; size];
-    let mut s = 0.0;
     for i in 0..size {
         for k in 0..size {
-            s = 0.0;
+            let mut s = 0.0;
             for j in 0..size {
                 s += matrix[j][i] * matrix[j][k];
             }
@@ -286,7 +284,7 @@ pub fn regular(matrix: Vec<Vec<f64>>, free_elements: Vec<f64>, size: usize) -> V
         }
     }
     for i in 0..size {
-        s = 0.0;
+        let mut s = 0.0;
         for j in 0..size {
             s += matrix[j][i] * free_elements[j]
         }
@@ -377,4 +375,95 @@ fn sort_rows(
             matrix[sort_index][i] = temp;
         }
     }
+}
+pub fn f1(y1: f64, y2: f64, x: f64) -> f64 {
+    (y1 + x) / (y1.powi(2) + y2.powi(2))
+}
+pub fn f2(y1: f64, y2: f64, x: f64) -> f64 {
+    (y1 + x * y2).cos()
+}
+
+// Lab 8
+pub fn eiler(
+    a: f64,
+    b: f64,
+    n: usize,
+    kolfun: usize,
+    mut x: f64,
+    f: Vec<&dyn Fn(f64, f64, f64) -> f64>,
+    y_1: &mut Vec<Vec<f64>>,
+) -> Vec<(f64, f64, f64)> {
+    let mut out: Vec<(f64, f64, f64)> = Vec::new();
+    let t: f64 = (b - a) / (n as f64);
+    for i in 1..n + 1 {
+        for k in 0..kolfun {
+            let value = y_1[k][i - 1] + t * f[k](x, y_1[0][i - 1], y_1[1][i - 1]);
+            y_1[k].push(value);
+        }
+        x += t;
+        out.push((x, y_1[0][i], y_1[1][i]));
+    }
+    out.push((a, y_1[0][1], y_1[1][2]));
+    out
+}
+pub fn prognoz(
+    a: f64,
+    b: f64,
+    n: usize,
+    kolfun: usize,
+    mut x: f64,
+    f: Vec<&dyn Fn(f64, f64, f64) -> f64>,
+    y_1: &mut Vec<Vec<f64>>,
+) -> Vec<(f64, f64, f64)> {
+    let mut out: Vec<(f64, f64, f64)> = Vec::new();
+    let t: f64 = (b - a) / (n as f64);
+    for i in 1..n + 1 {
+        for k in 0..kolfun {
+            let value = y_1[k][i - 1]
+                + t * f[k](
+                    x + 0.5 * t,
+                    y_1[0][i - 1] + 0.5 * t * y_1[0][i - 1],
+                    y_1[1][i - 1] + 0.5 * t * y_1[1][i - 1],
+                );
+            y_1[k].push(value);
+        }
+        x += t;
+        out.push((x, y_1[0][i], y_1[1][i]));
+    }
+    out.push((a, y_1[0][1], y_1[1][2]));
+    out
+}
+pub fn runge_kut(
+    a: f64,
+    h: f64,
+    n: usize,
+    kolfun: usize,
+    mut x: f64,
+    f: Vec<&dyn Fn(f64, f64, f64) -> f64>,
+    y_1: &mut Vec<Vec<f64>>,
+) -> Vec<(f64, f64, f64)> {
+    let mut k = [0.0; 4];
+    let mut out: Vec<(f64, f64, f64)> = Vec::new();
+    for i in 1..n + 1 {
+        for j in 0..kolfun {
+            k[0] = f[j](x, y_1[0][i - 1], y_1[1][i - 1]);
+            k[1] = f[j](
+                x + h / 2.0,
+                y_1[0][i - 1] + h / 2.0 * k[1],
+                y_1[1][i - 1] + h / 2.0 * k[1],
+            );
+            k[2] = f[j](
+                x + h / 2.0,
+                y_1[0][i - 1] + h / 2.0 * k[2],
+                y_1[1][i - 1] + h / 2.0 * k[2],
+            );
+            k[3] = f[j](x + h, y_1[0][i - 1] + h * k[3], y_1[1][i - 1] + h * k[3]);
+            let value = y_1[j][i - 1] + h / 6.0 * (k[0] + 2.0 * k[1] + 2.0 * k[2] + k[3]);
+            y_1[j].push(value);
+        }
+        x += h;
+        out.push((x, y_1[0][i], y_1[1][i]));
+    }
+    out.push((a, y_1[0][1], y_1[1][2]));
+    out
 }
