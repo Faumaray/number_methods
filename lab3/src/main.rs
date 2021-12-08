@@ -64,25 +64,26 @@ fn main() {
         size = 2;
     }
     println!("--------------------------------------------------------------------------------");
+    println!("Изменение данных в ходе вычислений: ");
+    let answer_for_givens = givens(matrix.clone(), free_elements.clone(), size.clone());
+    let answer_for_regular = regular(matrix.clone(), free_elements.clone(), size.clone());
+    println!("--------------------------------------------------------------------------------");
     println!("Исходные данные: ");
     println!("");
     for i in 0..size {
         for j in 0..size {
             if j != 0 {
                 if matrix[i][j] < 0.0 {
-                    print!(" - {}x{}", matrix[i][j].abs(), i);
+                    print!(" - {}x{}", matrix[i][j].abs(), j);
                 } else {
-                    print!(" + {}x{}", matrix[i][j], i);
+                    print!(" + {}x{}", matrix[i][j], j);
                 }
             } else {
-                print!(" {}x{}", matrix[i][j], i);
+                print!(" {}x{}", matrix[i][j], j);
             }
         }
         print!(" = {}\n", free_elements[i]);
     }
-
-    let answer_for_givens = givens(matrix.clone(), free_elements.clone(), size.clone());
-    let answer_for_regular = regular(matrix.clone(), free_elements.clone(), size.clone());
     println!("--------------------------------------------------------------------------------");
     println!("Корни системы по Гивенсу:");
     for i in 0..size {

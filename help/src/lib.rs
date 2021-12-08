@@ -283,6 +283,7 @@ pub fn regular(matrix: Vec<Vec<f64>>, free_elements: Vec<f64>, size: usize) -> V
             a1[i][k] = s;
         }
     }
+
     for i in 0..size {
         let mut s = 0.0;
         for j in 0..size {
@@ -293,7 +294,7 @@ pub fn regular(matrix: Vec<Vec<f64>>, free_elements: Vec<f64>, size: usize) -> V
     let mut alfa = 0.0;
     let mut b2 = vec![EPS; size];
     let mut max = f64::MAX;
-    while max >= EPS {
+    while max > EPS {
         alfa += 0.00000001;
         let mut a2 = a1.clone();
         for i in 0..size {
@@ -308,7 +309,7 @@ pub fn regular(matrix: Vec<Vec<f64>>, free_elements: Vec<f64>, size: usize) -> V
         x0 = answer.clone();
         b2 = b1.clone();
         b2 = gaus(a2, b2);
-        max = (b2[1] - answer[1]).abs();
+        max = (b2[0] - answer[0]).abs();
         for i in 1..size {
             if (b2[i] - answer[i]).abs() > max {
                 max = (b2[i] - answer[i]).abs();
