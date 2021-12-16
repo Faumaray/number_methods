@@ -59,7 +59,7 @@ fn main() {
         17.0, 18.0, 19.0, 20.0,
     ];
     n = 20;
-    println!("Kvadrat = {} for x={}", kvadr(n, &x, &y, 20.0), 21.0);
+    println!("Kvadrat = {} for x={}", kvadr(n, &x, &y, 3.0), 3.0);
     println!("Newton = {} for x={}", newton(n, &x, &y, 20.0), 21.0);
     println!(
         "Lagr = {} for x={}",

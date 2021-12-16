@@ -68,6 +68,11 @@ fn main() {
     println!("Laverre: ");
     println!("");
     let answer = laverre(matrix.clone());
+    println!("Laverre eigenvals: ");
+    for value in answer.0 {
+        println!("{:?}", value);
+    }
+    println!("Laverre eigenvecs: ");
     for value in answer.1 {
         println!("{:?}", value);
     }
@@ -75,14 +80,24 @@ fn main() {
     println!("Krilov: ");
     println!("");
     let answer_krilov = krilov(matrix.clone());
+    println!("Krilov eigenvals: ");
     for value in answer_krilov.0 {
+        println!("{:?}", value);
+    }
+    println!("Krilov eigenvecs: ");
+    for value in answer_krilov.1 {
         println!("{:?}", value);
     }
     println!("--------------------------------------------------------------------------------");
     println!("Fadeev: ");
     println!("");
     let answer_fadeev = fadeev(matrix);
+    println!("Fadeev eigenvals: ");
     for value in answer_fadeev.0 {
+        println!("{:?}", value);
+    }
+    println!("Fadeev eigenvecs: ");
+    for value in answer_fadeev.1 {
         println!("{:?}", value);
     }
 }

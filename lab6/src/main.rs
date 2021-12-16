@@ -63,16 +63,17 @@ fn main() {
         print!("|{:.06}|\t", value);
     }
     println!("\nQR");
-    let ans = qr(matrix);
-    for row in ans {
+    let (vars, vecs) = qr(matrix);
+    for row in vecs {
         for value in row {
             print!("|{:.06}|\t", value);
         }
         println!("");
     }
+    println!("{:?}", vars);
 }
 
-fn qr(matrix: Vec<Vec<f64>>) -> Vec<Vec<f64>> {
+fn qr(matrix: Vec<Vec<f64>>) -> (Vec<f64>, Vec<Vec<f64>>) {
     let n = matrix.len();
     let mut out = vec![vec![0.0; n]; n];
     let mut q = vec![vec![0.0; n]; n];
@@ -143,7 +144,12 @@ fn qr(matrix: Vec<Vec<f64>>) -> Vec<Vec<f64>> {
         }
         qrk += 1;
     }
-    out
+    let mut vars = Vec::<f64>::new();
+    for i in 0..out.len() {
+        vars.push(out[i][i]);
+    }
+    vars.shrink_to_fit();
+    (vars, out)
 }
 fn vector_normir(a: &Vec<f64>, n: usize) -> f64 {
     let mut sum = 0.0;

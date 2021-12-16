@@ -143,8 +143,7 @@ pub fn gaus(mut orig: Vec<Vec<f64>>, free_elements: Vec<f64>) -> Vec<f64> {
 }
 
 // LAB2
-pub fn zejdelex(matrix: Vec<Vec<f64>>, free_elements: Vec<f64>, relax: f64) -> (Vec<f64>, usize) // пересмотреть решает вроде верно, но не похоже на правильный алгоритм
-{
+pub fn zejdelex(matrix: Vec<Vec<f64>>, free_elements: Vec<f64>, relax: f64) -> (Vec<f64>, usize) {
     let size: usize = free_elements.len();
     let mut answer = vec![0.0; size];
     let mut prev = vec![0.0; size];
@@ -232,7 +231,7 @@ pub fn givens(matrix: Vec<Vec<f64>>, free_elements: Vec<f64>, size: usize) -> Ve
     let mut r;
     for i in 0..(size - 1) {
         for j in (i + 1)..size {
-            let mut m = (matrix[i][i] * matrix[i][i] * matrix[j][i] * matrix[j][i]).sqrt();
+            let mut m = (matrix[i][i].powi(2) * matrix[j][i].powi(2)).sqrt();
             l = matrix[j][i] / m; // A12
             m = matrix[i][i] / m; //B12
             for k in 0..size {
@@ -260,19 +259,14 @@ pub fn givens(matrix: Vec<Vec<f64>>, free_elements: Vec<f64>, size: usize) -> Ve
         }
         print!(" = {}\n", indent_free_elements[i]);
     }
-    answer[size - 1] = indent_free_elements[size - 1] / indent_matrix[size - 1][size - 1];
-    for i in (0..=size - 2).rev() {
-        indent_free_elements[i] = free_elements[i];
-        indent_matrix[i][i] = matrix[i][i];
-        answer[i] =
-            (indent_free_elements[i] - matrix[i][i + 1] * answer[i + 1]) / indent_matrix[i][i];
-    }
+    answer = simple_gaus(indent_matrix.clone(), indent_free_elements.clone());
     answer
 }
-pub fn regular(matrix: Vec<Vec<f64>>, free_elements: Vec<f64>, size: usize) -> Vec<f64> {
+pub fn regular(matrix: Vec<Vec<f64>>, free_elements: Vec<f64>, size: usize) -> (usize, Vec<f64>) {
     let mut answer = vec![0.0; size];
     let mut a1 = vec![vec![0.0; size]; size];
     let mut b1 = vec![0.0; size];
+    let vozm = 0.005;
     let mut x0 = vec![0.0; size];
     for i in 0..size {
         for k in 0..size {
@@ -292,9 +286,10 @@ pub fn regular(matrix: Vec<Vec<f64>>, free_elements: Vec<f64>, size: usize) -> V
         b1[i] = s;
     }
     let mut alfa = 0.0;
-    let mut b2 = vec![EPS; size];
+    let mut b2 = vec![vozm; size];
     let mut max = f64::MAX;
-    while max > EPS {
+    let mut count = 0;
+    while max > vozm {
         alfa += 0.00000001;
         let mut a2 = a1.clone();
         for i in 0..size {
@@ -315,8 +310,9 @@ pub fn regular(matrix: Vec<Vec<f64>>, free_elements: Vec<f64>, size: usize) -> V
                 max = (b2[i] - answer[i]).abs();
             }
         }
+        count += 1;
     }
-    answer
+    (count, answer)
 }
 
 // Alternative
@@ -377,10 +373,10 @@ fn sort_rows(
         }
     }
 }
-pub fn f1(y1: f64, y2: f64, x: f64) -> f64 {
+pub fn f1(x: f64, y1: f64, y2: f64) -> f64 {
     (y1 + x) / (y1.powi(2) + y2.powi(2))
 }
-pub fn f2(y1: f64, y2: f64, x: f64) -> f64 {
+pub fn f2(x: f64, y1: f64, y2: f64) -> f64 {
     (y1 + x * y2).cos()
 }
 
@@ -395,6 +391,7 @@ pub fn eiler(
     y_1: &mut Vec<Vec<f64>>,
 ) -> Vec<(f64, f64, f64)> {
     let mut out: Vec<(f64, f64, f64)> = Vec::new();
+    out.push((a, y_1[0][0], y_1[1][0]));
     let t: f64 = (b - a) / (n as f64);
     for i in 1..n + 1 {
         for k in 0..kolfun {
@@ -404,7 +401,6 @@ pub fn eiler(
         x += t;
         out.push((x, y_1[0][i], y_1[1][i]));
     }
-    out.push((a, y_1[0][1], y_1[1][2]));
     out
 }
 pub fn prognoz(
@@ -417,6 +413,7 @@ pub fn prognoz(
     y_1: &mut Vec<Vec<f64>>,
 ) -> Vec<(f64, f64, f64)> {
     let mut out: Vec<(f64, f64, f64)> = Vec::new();
+    out.push((a, y_1[0][0], y_1[1][0]));
     let t: f64 = (b - a) / (n as f64);
     for i in 1..n + 1 {
         for k in 0..kolfun {
@@ -431,12 +428,11 @@ pub fn prognoz(
         x += t;
         out.push((x, y_1[0][i], y_1[1][i]));
     }
-    out.push((a, y_1[0][1], y_1[1][2]));
     out
 }
 pub fn runge_kut(
     a: f64,
-    h: f64,
+    b: f64,
     n: usize,
     kolfun: usize,
     mut x: f64,
@@ -444,27 +440,69 @@ pub fn runge_kut(
     y_1: &mut Vec<Vec<f64>>,
 ) -> Vec<(f64, f64, f64)> {
     let mut k = [0.0; 4];
+    let h: f64 = (b - a) / (n as f64);
     let mut out: Vec<(f64, f64, f64)> = Vec::new();
+    out.push((a, y_1[0][0], y_1[1][0]));
     for i in 1..n + 1 {
         for j in 0..kolfun {
             k[0] = f[j](x, y_1[0][i - 1], y_1[1][i - 1]);
             k[1] = f[j](
-                x + h / 2.0,
-                y_1[0][i - 1] + h / 2.0 * k[1],
-                y_1[1][i - 1] + h / 2.0 * k[1],
+                x + (h / 2.0),
+                y_1[0][i - 1] + (h * k[1]) / 2.0,
+                y_1[1][i - 1] + (h * k[1]) / 2.0,
             );
             k[2] = f[j](
-                x + h / 2.0,
-                y_1[0][i - 1] + h / 2.0 * k[2],
-                y_1[1][i - 1] + h / 2.0 * k[2],
+                x + (h / 2.0),
+                y_1[0][i - 1] + (h * k[2]) / 2.0,
+                y_1[1][i - 1] + (h * k[2]) / 2.0,
             );
             k[3] = f[j](x + h, y_1[0][i - 1] + h * k[3], y_1[1][i - 1] + h * k[3]);
-            let value = y_1[j][i - 1] + h / 6.0 * (k[0] + 2.0 * k[1] + 2.0 * k[2] + k[3]);
+            let value = y_1[j][i - 1] + h * ((k[0] + 2.0 * k[1] + 2.0 * k[2] + k[3]) / 6.0);
             y_1[j].push(value);
         }
         x += h;
         out.push((x, y_1[0][i], y_1[1][i]));
     }
-    out.push((a, y_1[0][1], y_1[1][2]));
+    out
+}
+pub fn adams(
+    a: f64,
+    b: f64,
+    n: usize,
+    f: Vec<&dyn Fn(f64, f64, f64) -> f64>,
+    new_values: &mut Vec<f64>,
+) -> Vec<(f64, f64, f64)> {
+    let mut x = a;
+    let h: f64 = (b - a) / (n as f64);
+    let mut out: Vec<(f64, f64, f64)> = Vec::new();
+    let mut y_1 = vec![vec![new_values[0]], vec![new_values[1]]];
+    let y_2 = runge_kut(a, b, n, 2, x, f.clone(), &mut y_1);
+    y_1 = vec![Vec::<f64>::new(), Vec::<f64>::new()];
+    for i in 0..y_2.len() {
+        y_1[0].push(y_2[i].1);
+        y_1[1].push(y_2[i].2);
+    }
+    for i in 0..2 {
+        for j in 0..2 {
+            new_values[j] = y_1[j][i + 1]
+                + h * ((1.5 * f[j](x + h, y_1[0][i + 1], y_1[1][i + 1]))
+                    - (0.5 * f[j](x, y_1[0][i], y_1[1][i])));
+        }
+        y_1[0][i + 2] = new_values[0];
+        y_1[1][i + 2] = new_values[1];
+        out.push((x, y_1[0][i], y_1[1][i]));
+        x += h;
+    }
+    for i in 2..(n + 1) {
+        for j in 0..2 {
+            new_values[j] = y_1[j][i]
+                + h * ((1.5 * f[j](x - h, y_1[0][i - 1], y_1[1][i - 1]))
+                    - (0.5 * f[j](x - (2.0 * h), y_1[0][i - 2], y_1[1][i - 2])));
+        }
+        y_1[0][i - 2] = new_values[0];
+        y_1[1][i - 2] = new_values[1];
+        out.push((x, y_1[0][i], y_1[1][i]));
+        x += h;
+    }
     out
 }

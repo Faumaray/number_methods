@@ -123,19 +123,19 @@ fn jacobi_matrix_newton(x: &Vec<f64>, i: usize, j: usize) -> f64 {
     match i {
         0 => match j {
             0 => {
-                res = -(x[0].sin());
+                res = -(x[0].sin()); //func_newton d/dx(0)
             }
             1 => {
-                res = 1.0;
+                res = 1.0; //func_newton d/dy(0)
             }
             _ => {}
         },
         1 => match j {
             0 => {
-                res = 2.0;
+                res = 2.0; //func_newton d/dx(1)
             }
             1 => {
-                res = -((x[1] - 0.5).cos());
+                res = -((x[1] - 0.5).cos()); //func_newton d/dy(1)
             }
             _ => {}
         },

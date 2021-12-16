@@ -59,10 +59,11 @@ fn main() {
             };
         }
     } else {
-        matrix = vec![vec![1.03, 0.993], vec![0.991, 0.051]];
+        matrix = vec![vec![1.03, 0.993], vec![0.991, 0.953]];
         free_elements = vec![2.53, 2.43];
         size = 2;
     }
+    let free = vec![2.53, 2.43];
     println!("--------------------------------------------------------------------------------");
     println!("Изменение данных в ходе вычислений: ");
     let answer_for_givens = givens(matrix.clone(), free_elements.clone(), size.clone());
@@ -99,14 +100,15 @@ fn main() {
     }
     println!("\n---------------------------------------------------------------------------------");
     println!("Корни системы по Регулярному:");
+    println!("Count = {}", answer_for_regular.0);
     for i in 0..size {
-        print!("x{} = {} ", i, answer_for_regular[i]);
+        print!("x{} = {} ", i, answer_for_regular.1[i]);
     }
     println!("Проверка");
     for i in 0..size {
         let mut ans = 0.0;
         for j in 0..size {
-            ans += matrix[i][j] * answer_for_regular[j];
+            ans += matrix[i][j] * answer_for_regular.1[j];
         }
         println!("x[{}] = {}", i, ans - free_elements[i]);
     }
